@@ -11,7 +11,7 @@ const port = Number(process.env.PORT || 3000);
 const authDir = process.env.AUTH_DIR || "auth_info_baileys";
 const logger = pino({ level: process.env.LOG_LEVEL || "warn" });
 const makeWASocket = baileys.default?.default || baileys.default || baileys.makeWASocket;
-const { DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, jidNormalizedUser } = baileys;
+const { DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, jidNormalizedUser, Browsers } = baileys;
 const groupConfig = new Map();
 const warnings = new Map();
 let sock;
@@ -118,7 +118,7 @@ async function connect(phoneNumber) {
   if (sock && connectionState === "connected") return sock;
   const { state, saveCreds } = await useMultiFileAuthState(authDir);
   const { version } = await fetchLatestBaileysVersion();
-  sock = makeWASocket({ auth: state, version, printQRInTerminal: false, logger });
+  sock = makeWASocket({ auth: state, version, browser: Browsers.ubuntu("Chrome"), printQRInTerminal: false, logger });
   sock.ev.on("creds.update", saveCreds);
   sock.ev.on("messages.upsert", ({ messages }) => onMessages(messages));
   sock.ev.on("connection.update", ({ connection, lastDisconnect }) => {
@@ -135,7 +135,7 @@ async function connect(phoneNumber) {
   });
   if (!state.creds.registered && phoneNumber) {
     // Baileys necesita unos segundos para abrir el transporte antes de pedir el código.
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise(resolve => setTimeout(resolve, 10000));
     const code = await sock.requestPairingCode(phoneNumber);
     return code;
   }
