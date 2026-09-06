@@ -1,7 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import makeWASocket, { DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, jidNormalizedUser } from "@whiskeysockets/baileys";
+import * as baileys from "@whiskeysockets/baileys";
 import { Boom } from "@hapi/boom";
 import pino from "pino";
 import fs from "node:fs/promises";
@@ -10,6 +10,8 @@ const app = express();
 const port = Number(process.env.PORT || 3000);
 const authDir = process.env.AUTH_DIR || "auth_info_baileys";
 const logger = pino({ level: process.env.LOG_LEVEL || "warn" });
+const makeWASocket = baileys.default?.default || baileys.default || baileys.makeWASocket;
+const { DisconnectReason, useMultiFileAuthState, fetchLatestBaileysVersion, jidNormalizedUser } = baileys;
 const groupConfig = new Map();
 const warnings = new Map();
 let sock;
