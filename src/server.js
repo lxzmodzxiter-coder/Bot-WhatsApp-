@@ -132,7 +132,8 @@ async function connect(phoneNumber) {
     }
   });
   if (!state.creds.registered && phoneNumber) {
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    // Baileys necesita unos segundos para abrir el transporte antes de pedir el código.
+    await new Promise(resolve => setTimeout(resolve, 5000));
     const code = await sock.requestPairingCode(phoneNumber);
     return code;
   }
@@ -148,7 +149,10 @@ app.post("/api/whatsapp/pairing-code", async (req, res) => {
     const code = await connect(phoneNumber);
     if (!code) return res.status(409).json({ ok: false, error: "La sesión ya está registrada o hay una conexión en curso", connection: connectionState });
     return res.json({ ok: true, code, phoneNumber, connection: connectionState });
-  } catch (error) { lastError = error.message; return jsonError(res, 500, "No se pudo solicitar el código de WhatsApp"); }
+  } catch (error) {
+    lastError = error instanceof Error ? error.message : String(error);
+    return jsonError(res, 500, `WhatsApp rechazó la solicitud: ${lastError}`);
+  }
 });
 app.get("/api/whatsapp/groups", async (_req, res) => {
   try { return res.json({ ok: true, groups: await listGroups(), syncing: connectionState !== "connected" }); }
