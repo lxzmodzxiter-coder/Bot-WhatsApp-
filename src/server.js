@@ -136,7 +136,14 @@ async function connect(phoneNumber) {
   if (!state.creds.registered && phoneNumber) {
     // Baileys necesita unos segundos para abrir el transporte antes de pedir el código.
     await new Promise(resolve => setTimeout(resolve, 10000));
+    const pairingSocket = sock;
     const code = await sock.requestPairingCode(phoneNumber);
+    setTimeout(() => {
+      if (sock === pairingSocket && connectionState !== "connected") {
+        connectionState = "pairing_timeout";
+        try { pairingSocket.ws?.close(); } catch { /* socket already closed */ }
+      }
+    }, 80_000);
     return code;
   }
   return null;
